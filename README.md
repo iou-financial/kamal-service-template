@@ -2,6 +2,17 @@
 
 Template files for adding a new service to Kamal staging.
 
+## Create a new repo from this template
+
+1. Go to https://github.com/iou-financial/kamal-service-template
+2. Click **"Use this template"** → **"Create a new repository"**
+3. Set the owner to **iou-financial**, name it after your service
+4. Set visibility to **Private**, click **Create repository**
+5. Clone locally: `git clone git@github.com:iou-financial/YOUR_SERVICE.git`
+6. Find and replace all `__SERVICE__` placeholders with your service name
+7. Replace `__ELASTIC_IP__` with the IP from terraform (step 1 below)
+8. Replace `__SERVICE_UPPER__` with the uppercase env var prefix (e.g. `DELPHI`)
+
 ## Steps
 
 ### 1. Terraform — add EC2 instance
