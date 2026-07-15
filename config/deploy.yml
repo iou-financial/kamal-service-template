@@ -1,0 +1,52 @@
+service: __SERVICE__
+image: iou-financial/__SERVICE__
+
+ssh:
+  user: ubuntu
+
+servers:
+  web:
+    hosts:
+      - <%= ENV["KAMAL_WEB_HOST"] %>
+    options:
+      memory: 1g
+  # Uncomment for background workers:
+  # workers:
+  #   hosts:
+  #     - <%= ENV["KAMAL_WEB_HOST"] %>
+  #   cmd: bundle exec rails solid_queue:start
+
+proxy:
+  ssl: true
+  app_port: 3000
+  healthcheck:
+    path: /up
+    interval: 3
+    timeout: 3
+
+deploy_timeout: 120
+
+registry:
+  server: ghcr.io
+  username: iou-financial
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+  dockerfile: .docker/Dockerfile.kamal
+
+env:
+  clear:
+    RAILS_ENV: production
+    RAILS_LOG_TO_STDOUT: "true"
+    TZ: America/New_York
+  secret:
+    - SECRET_KEY_BASE
+    # Add service-specific secrets here
+
+aliases:
+  console: app exec --interactive --reuse "bin/rails console"
+  shell: app exec --interactive --reuse "bash"
+  logs: app logs -f
+  dbc: app exec --interactive --reuse "bin/rails dbconsole"

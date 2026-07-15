@@ -1,0 +1,14 @@
+#!/bin/sh
+
+SLACK_WEBHOOK=$(aws secretsmanager get-secret-value --secret-id "shared/staging/SLACK_DEPLOY_WEBHOOK" --query SecretString --output text --region us-east-1)
+
+SERVICE="__SERVICE__"
+PERFORMER="${KAMAL_PERFORMER:-unknown}"
+VERSION="${KAMAL_VERSION:-unknown}"
+SHORT_VERSION=$(echo "$VERSION" | cut -c1-7)
+
+curl -s -X POST -H 'Content-type: application/json' \
+  --data "{\"text\":\":hammer_and_wrench: *Building ${SERVICE}* image...\n>*By:* ${PERFORMER}\n>*Version:* \`${SHORT_VERSION}\`\"}" \
+  "$SLACK_WEBHOOK" > /dev/null 2>&1
+
+echo "Slack notification sent (pre-build)"

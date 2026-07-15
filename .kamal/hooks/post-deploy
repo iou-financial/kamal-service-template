@@ -1,0 +1,33 @@
+#!/bin/sh
+
+SLACK_WEBHOOK=$(aws secretsmanager get-secret-value --secret-id "shared/staging/SLACK_DEPLOY_WEBHOOK" --query SecretString --output text --region us-east-1)
+
+SERVICE="__SERVICE__"
+DESTINATION="${KAMAL_DESTINATION:-unknown}"
+PERFORMER="${KAMAL_PERFORMER:-unknown}"
+VERSION="${KAMAL_VERSION:-unknown}"
+RUNTIME="${KAMAL_RUNTIME:-unknown}"
+SHORT_VERSION=$(echo "$VERSION" | cut -c1-7)
+
+if [ "$DESTINATION" = "staging" ]; then
+  URL="https://__SERVICE__.staging.ioufinancial.com/up"
+else
+  URL=""
+fi
+
+URL_LINE=""
+if [ -n "$URL" ]; then
+  URL_LINE="\n>*URL:* ${URL}"
+fi
+
+curl -s -X POST -H 'Content-type: application/json' \
+  --data "{\"text\":\":white_check_mark: *${SERVICE}* deployed to *${DESTINATION}* successfully\n>*By:* ${PERFORMER}\n>*Version:* \`${SHORT_VERSION}\`\n>*Duration:* ${RUNTIME}s${URL_LINE}\"}" \
+  "$SLACK_WEBHOOK" > /dev/null 2>&1
+
+echo "Slack notification sent (post-deploy)"
+
+# Clean up old containers and images to prevent disk full
+for HOST in $(echo "$KAMAL_HOSTS" | tr ',' ' '); do
+  ssh -o StrictHostKeyChecking=no ubuntu@$HOST "docker container prune -f && docker image prune -a -f" > /dev/null 2>&1
+done
+echo "Docker cleanup complete (post-deploy)"

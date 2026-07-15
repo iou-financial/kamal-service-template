@@ -1,0 +1,16 @@
+allow_empty_roles: true
+
+servers:
+  web:
+    hosts:
+      - __ELASTIC_IP__
+  # Uncomment if workers defined in base deploy.yml:
+  # workers:
+  #   hosts: []
+
+proxy:
+  host: __SERVICE__.staging.ioufinancial.com
+
+env:
+  clear:
+    __SERVICE_UPPER___HOST: __SERVICE__.staging.ioufinancial.com

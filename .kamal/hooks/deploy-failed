@@ -1,0 +1,20 @@
+#!/bin/sh
+
+SLACK_WEBHOOK=$(aws secretsmanager get-secret-value --secret-id "shared/staging/SLACK_DEPLOY_WEBHOOK" --query SecretString --output text --region us-east-1)
+
+SERVICE="__SERVICE__"
+PERFORMER="${KAMAL_PERFORMER:-${GITHUB_ACTOR:-unknown}}"
+VERSION="${KAMAL_VERSION:-${GITHUB_SHA:-unknown}}"
+SHORT_VERSION=$(echo "$VERSION" | cut -c1-7)
+RUN_URL="${GITHUB_SERVER_URL:-}/${GITHUB_REPOSITORY:-}/actions/runs/${GITHUB_RUN_ID:-}"
+
+RUN_LINE=""
+if [ -n "$GITHUB_RUN_ID" ]; then
+  RUN_LINE="\n>*Run:* ${RUN_URL}"
+fi
+
+curl -s -X POST -H 'Content-type: application/json' \
+  --data "{\"text\":\":x: *${SERVICE}* staging deploy failed\n>*By:* ${PERFORMER}\n>*Version:* \`${SHORT_VERSION}\`${RUN_LINE}\"}" \
+  "$SLACK_WEBHOOK" > /dev/null 2>&1
+
+echo "Slack notification sent (deploy-failed)"
