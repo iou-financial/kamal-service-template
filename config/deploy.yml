@@ -17,7 +17,9 @@ servers:
   #   cmd: bundle exec rails solid_queue:start
 
 proxy:
-  ssl: true
+  ssl:
+    certificate_pem: ORIGIN_CERTIFICATE_PEM
+    private_key_pem: ORIGIN_PRIVATE_KEY_PEM
   app_port: 3000
   healthcheck:
     path: /up
