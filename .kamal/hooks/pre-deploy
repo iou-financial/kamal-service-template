@@ -13,3 +13,8 @@ curl -s -X POST -H 'Content-type: application/json' \
   "$SLACK_WEBHOOK" > /dev/null 2>&1
 
 echo "Slack notification sent (pre-deploy)"
+
+# Run database migrations on current container before deploying new code
+echo "Running database migrations..."
+kamal app exec -d "$DESTINATION" 'bin/rails db:migrate'
+echo "Database migrations complete (pre-deploy)"
