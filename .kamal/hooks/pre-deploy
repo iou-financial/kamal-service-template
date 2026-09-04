@@ -1,6 +1,34 @@
 #!/bin/sh
+set -e
 
-# Run database migrations on current container before deploying new code
-echo "Running database migrations..."
-kamal app exec -d "$DESTINATION" 'bin/rails db:migrate'
+# Run database migrations before booting the new code.
+#
+# Kamal exposes the destination as KAMAL_DESTINATION and the image being
+# deployed as KAMAL_VERSION. All three flags below matter:
+#
+#   -d "$KAMAL_DESTINATION"
+#     There is no plain $DESTINATION var. A bare `-d ""` makes Kamal look
+#     for a config file named config/deploy..yml and abort.
+#
+#   --version="$KAMAL_VERSION"
+#     Without it, `app exec` defaults to the :latest-<dest> tag, which still
+#     points at the PREVIOUS image at pre-deploy time (Kamal only moves that
+#     tag after a successful boot). Migrations would run against the old code
+#     and miss anything new in this commit.
+#
+#   --roles=web
+#     `app exec` hits every role by default, which fires db:migrate once per
+#     role concurrently against the same database. Run it once, on web.
+#
+# `set -e` means a failed migration aborts the deploy instead of shipping
+# code whose schema was never applied.
+
+echo "Running database migrations (version ${KAMAL_VERSION})..."
+
+if [ -n "$KAMAL_DESTINATION" ]; then
+  kamal app exec -d "$KAMAL_DESTINATION" --version="$KAMAL_VERSION" --roles=web 'bin/rails db:migrate'
+else
+  kamal app exec --version="$KAMAL_VERSION" --roles=web 'bin/rails db:migrate'
+fi
+
 echo "Database migrations complete (pre-deploy)"
