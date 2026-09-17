@@ -1,0 +1,21 @@
+#!/bin/sh
+set -e
+
+# Fail the deploy early if AWS credentials are not usable.
+#
+# Every secret in .kamal/secrets.* is fetched through .kamal/fetch-secret,
+# which Kamal runs inside Ruby backticks -- the exit status is DISCARDED. So a
+# failed fetch (expired SSO, wrong profile, no role) becomes an empty string
+# that Kamal happily deploys, and the app boots with every secret blank. That
+# is how nucleus ended up with a crash-looping container on 2026-09-17.
+#
+# Hooks are different: Kamal::Cli::Base#run_hook raises HookError on a non-zero
+# exit, so this check can actually stop the deploy.
+
+if ! aws sts get-caller-identity >/dev/null 2>&1; then
+  echo "pre-connect: no usable AWS credentials (AWS_PROFILE=${AWS_PROFILE:-unset})." >&2
+  echo "pre-connect: secrets would be fetched as empty strings and deployed silently." >&2
+  exit 1
+fi
+
+echo "pre-connect: AWS credentials OK"
